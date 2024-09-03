@@ -1,6 +1,5 @@
-import { createContext, ReactNode, useEffect, useState } from "react";
+import { createContext, ReactNode, useState } from "react";
 import {
-  checkAuthStatus,
   logoutUser,
   signInUser,
   signUpUser,
@@ -14,6 +13,8 @@ type User = {
 type UserAuth = {
   isSignedIn: boolean;
   user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>; // Add this line
+  setIsSignedIn: React.Dispatch<React.SetStateAction<boolean>>; // Add this line
   signin: (email: string, password: string) => Promise<boolean>;
   signup: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -24,21 +25,6 @@ export const AuthContext = createContext<UserAuth | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
-
-  useEffect(() => {
-    async function checkStatus() {
-      try {
-        const data = await checkAuthStatus();
-        if (data) {
-          setUser({ email: data.email, name: data.name });
-          setIsSignedIn(true);
-        }
-      } catch (error) {
-        console.error("Error checking auth status:", error);
-      }
-    }
-    checkStatus();
-  }, []);
 
   const signin = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -82,6 +68,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     user,
     isSignedIn,
+    setUser, // Pass setUser in the context value
+    setIsSignedIn, // Pass setIsSignedIn in the context value
     signin,
     signup,
     logout,
