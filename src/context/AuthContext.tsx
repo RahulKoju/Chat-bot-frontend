@@ -1,5 +1,6 @@
-import { createContext, ReactNode, useState } from "react";
+import { createContext, ReactNode, useEffect, useState } from "react";
 import {
+  checkAuthStatus,
   logoutUser,
   signInUser,
   signUpUser,
@@ -25,6 +26,32 @@ export const AuthContext = createContext<UserAuth | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const verifyAuth = async () => {
+      try {
+        const data = await checkAuthStatus();
+        if (data) {
+          setUser({ email: data.email, name: data.name });
+          setIsSignedIn(true);
+        } else {
+          // User is not authenticated
+          setUser(null);
+          setIsSignedIn(false);
+        }
+      } catch (error) {
+        // This will now only log for unexpected errors
+        console.error("Error checking auth status:", error);
+        setUser(null);
+        setIsSignedIn(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    verifyAuth();
+  }, []);
 
   const signin = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -74,6 +101,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signup,
     logout,
   };
-
+  if (isLoading) {
+    return <div>Loading...</div>; // Or a loading spinner
+  }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
